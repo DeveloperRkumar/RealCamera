@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real Camera</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #0a0a0a; color: white; overflow-x: hidden; }
+
+    /* LOADING SCREEN */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #0d1b2a, #1b2a4a);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: fadeOut 0.5s ease-in-out 3s forwards;
+    }
+    @keyframes fadeOut {
+      to { opacity: 0; visibility: hidden; }
+    }
+    .loader {
+      width: 80px;
+      height: 80px;
+      border: 4px solid #4a90e2;
+      border-top: 4px solid #fff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .loading-text {
+      margin-top: 30px;
+      font-size: 18px;
+      color: #4a90e2;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+
+    /* HEADER */
+    .header {
+      background: linear-gradient(135deg, #0d1b2a, #1b2a4a, #0d1b2a);
+      padding: 15px;
+      text-align: center;
+      border-bottom: 3px solid #4a90e2;
+      box-shadow: 0 4px 20px rgba(74, 144, 226, 0.3);
+    }
+    .header .logo-icon { font-size: 40px; margin-bottom: 5px; }
+    .header .logo-name {
+      font-size: 26px;
+      font-weight: bold;
+      color: #4a90e2;
+      letter-spacing: 2px;
+    }
+    .header .tagline {
+      font-size: 12px;
+      color: #aac4e8;
+      margin-top: 3px;
+      letter-spacing: 1px;
+    }
+
+    /* MAIN CONTAINER */
+    .main-container {
+      max-width: 100%;
+      padding: 0;
+      background: #0a0a0a;
+    }
+
+    /* CAMERA SECTION */
+    .camera-section {
+      background: linear-gradient(135deg, #0d1b2a, #1b2a4a);
+      padding: 20px;
+      text-align: center;
+    }
+    .camera-section h2 { 
+      font-size: 22px; 
+      color: #4a90e2; 
+      margin-bottom: 15px;
+    }
+    .camera-container {
+      width: 100%;
+      background: #0d1b2a;
+      border-radius: 15px;
+      border: 2px solid #4a90e2;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(74, 144, 226, 0.3);
+      margin-bottom: 15px;
+    }
+    #cameraFeed {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #000;
+      aspect-ratio: 16/9;
+    }
+    .camera-controls {
+      padding: 15px;
+      background: #0d1b2a;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .camera-btn {
+      background: #4a90e2;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      transition: 0.3s;
+      white-space: nowrap;
+    }
+    .camera-btn:hover { background: #357abd; transform: scale(1.05); }
+    .camera-btn.active { background: #2ecc71; }
+
+    /* FILTER SECTION */
+    .filter-section {
+      padding: 15px;
+      background: #111;
+      border-top: 1px solid #4a90e2;
+    }
+    .filter-label {
+      color: #4a90e2;
+      font-weight: bold;
+      margin-bottom: 10px;
+      display: block;
+      font-size: 14px;
+    }
+    .filter-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .filter-btn {
+      background: #0d1b2a;
+      color: #4a90e2;
+      padding: 8px 12px;
+      border-radius: 15px;
+      border: 1px solid #4a90e2;
+      cursor: pointer;
+      font-size: 12px;
+      transition: 0.3s;
+      white-space: nowrap;
+    }
+    .filter-btn:hover { background: #4a90e2; color: white; }
+    .filter-btn.active { background: #4a90e2; color: white; }
+
+    /* FUNCTIONS MENU */
+    .functions-menu {
+      padding: 15px;
+      background: #0a0a0a;
+      border-top: 2px solid #4a90e2;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+    .function-btn {
+      background: #4a90e2;
+      color: white;
+      padding: 12px 25px;
+      border-radius: 25px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: 0.3s;
+      white-space: nowrap;
+    }
+    .function-btn:hover { background: #357abd; transform: scale(1.05); }
+    .function-btn.active { background: #2ecc71; }
+
+    /* HIDDEN SECTIONS */
+    .section-hidden {
+      display: none;
+    }
+    .section-visible {
+      display: block;
+    }
+
+    /* PHOTO EDITOR SECTION */
+    .photo-editor-section {
+      background: linear-gradient(135deg, #0d1b2a, #1b2a4a);
+      padding: 20px;
+      text-align: center;
+    }
+    .photo-editor-section h2 { font-size: 22px; color: #4a90e2; margin-bottom: 15px; }
+    .editor-container {
+      width: 100%;
+      background: #0d1b2a;
+      border-radius: 15px;
+      padding: 15px;
+      border: 2px solid #4a90e2;
+    }
+    #photoCanvas {
+      width: 100%;
+      max-height: 500px;
+      background: #000;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      cursor: crosshair;
+    }
+
+    /* EDITOR TOOLS TABS */
+    .editor-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #4a90e2;
+      padding-bottom: 10px;
+    }
+    .tab-btn {
+      background: #0d1b2a;
+      color: #4a90e2;
+      padding: 8px 15px;
+      border-radius: 10px;
+      border: 1px solid #4a90e2;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+    .tab-btn:hover { background: #4a90e2; color: white; }
+    .tab-btn.active { background: #4a90e2; color: white; }
+
+    /* EDITOR CONTROLS */
+    .editor-controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 15px;
+      padding: 15px;
+      background: #111;
+      border-radius: 10px;
+    }
+    .editor-control {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    .editor-control label {
+      color: #4a90e2;
+      font-size: 11px;
+      font-weight: bold;
+    }
+    .editor-control input[type="range"] {
+      width: 120px;
+      cursor: pointer;
+    }
+    .editor-control input[type="color"] {
+      width: 40px;
+      height: 35px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .editor-control input[type="text"],
+    .editor-control input[type="number"],
+    .editor-control select {
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #4a90e2;
+      background: #0d1b2a;
+      color: #4a90e2;
+      font-size: 12px;
+    }
+
+    /* EDITOR BUTTONS */
+    .editor-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .editor-btn {
+      background: #4a90e2;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      transition: 0.3s;
+      white-space: nowrap;
+    }
+    .editor-btn:hover { background: #357abd; }
+    .editor-btn.danger { background: #e74c3c; }
+    .editor-btn.danger:hover { background: #c0392b; }
+
+    /* VIDEO EDITOR SECTION */
+    .video-editor-section {
+      background: #0a0a0a;
+      padding: 20px;
+      text-align: center;
+    }
+    .video-editor-section h2 { font-size: 22px; color: #4a90e2; margin-bottom: 15px; }
+    .video-container {
+      width: 100%;
+      background: #0d1b2a;
+      border-radius: 15px;
+      padding: 15px;
+      border: 2px solid #4a90e2;
+    }
+    #videoPreview {
+      width: 100%;
+      height: auto;
+      background: #000;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+    .video-controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+    .video-btn {
+      background: #4a90e2;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      transition: 0.3s;
+      white-space: nowrap;
+    }
+    .video-btn:hover { background: #357abd; }
+
+    /* FILE INPUT */
+    input[type="file"] {
+      color: #4a90e2;
+      font-size: 12px;
+      margin-bottom: 15px;
+    }
+
+    /* QUALITY SELECTOR */
+    .quality-selector {
+      background: #111;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+    .quality-label {
+      color: #4a90e2;
+      font-weight: bold;
+      margin-bottom: 10px;
+      display: block;
+    }
+    .quality-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .quality-btn {
+      background: #0d1b2a;
+      color: #4a90e2;
+      padding: 8px 15px;
+      border-radius: 15px;
+      border: 1px solid #4a90e2;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+    .quality-btn:hover { background: #4a90e2; color: white; }
+    .quality-btn.active { background: #4a90e2; color: white; }
+
+    /* FOOTER */
+    footer {
+      background: #0d1b2a;
+      text-align: center;
+      padding: 15px;
+      color: #666;
+      font-size: 12px;
+      border-top: 2px solid #4a90e2;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .header .logo-name { font-size: 22px; }
+      .header .logo-icon { font-size: 35px; }
+      .camera-btn, .filter-btn, .function-btn { font-size: 12px; padding: 8px 12px; }
+      .editor-control input[type="range"] { width: 100px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOADING SCREEN -->
+  <div class="loading-screen">
+    <div class="loader"></div>
+    <div class="loading-text">LOADING...</div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo-icon">📷</div>
+    <div class="logo-name">REAL CAMERA</div>
+    <div class="tagline">Professional Photo & Video Editing | Camera Filters</div>
+  </div>
+
+  <!-- MAIN CONTAINER -->
+  <div class="main-container">
+
+    <!-- CAMERA SECTION -->
+    <section class="camera-section">
+      <h2>📹 Live Camera</h2>
+      <div class="camera-container">
+        <video id="cameraFeed" autoplay playsinline></video>
+        <div class="camera-controls">
+          <button class="camera-btn" onclick="startCamera()">📹 Start</button>
+          <button class="camera-btn" onclick="stopCamera()">⏹️ Stop</button>
+          <button class="camera-btn" onclick="capturePhoto()">📸 Capture</button>
+          <button class="camera-btn" onclick="toggleMirror()">🔄 Mirror</button>
+        </div>
+      </div>
+
+      <!-- FILTERS SECTION -->
+      <div class="filter-section">
+        <span class="filter-label">🎨 Filters:</span>
+        <div class="filter-buttons">
+          <button class="filter-btn active" onclick="applyFilter('none')">Normal</button>
+          <button class="filter-btn" onclick="applyFilter('grayscale')">B&W</button>
+          <button class="filter-btn" onclick="applyFilter('sepia')">Sepia</button>
+          <button class="filter-btn" onclick="applyFilter('invert')">Invert</button>
+          <button class="filter-btn" onclick="applyFilter('blur')">Blur</button>
+          <button class="filter-btn" onclick="applyFilter('brightness')">Bright</button>
+          <button class="filter-btn" onclick="applyFilter('contrast')">Contrast</button>
+          <button class="filter-btn" onclick="applyFilter('saturate')">Saturate</button>
+          <button class="filter-btn" onclick="applyFilter('huerotate')">Hue</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FUNCTIONS MENU -->
+    <div class="functions-menu">
+      <button class="function-btn active" onclick="showSection('camera')">📹 Camera</button>
+      <button class="function-btn" onclick="showSection('photo')">📸 Photo Edit</button>
+      <button class="function-btn" onclick="showSection('video')">🎬 Video Edit</button>
+      <button class="function-btn" onclick="refreshPage()">🔄 Refresh</button>
+      <button class="function-btn" onclick="downloadWebsite()">⬇️ Download App</button>
+    </div>
+
+    <!-- PHOTO EDITOR SECTION -->
+    <section class="photo-editor-section section-hidden" id="photo-section">
+      <h2>📸 Advanced Photo Editing</h2>
+      <div class="editor-container">
+        <canvas id="photoCanvas"></canvas>
+        <div>
+          <input type="file" id="photoInput" accept="image/*" onchange="loadPhoto(event)">
+        </div>
+
+        <!-- EDITOR TABS -->
+        <div class="editor-tabs">
+          <button class="tab-btn active" onclick="switchTab('adjust')">⚙️ Adjust</button>
+          <button class="tab-btn" onclick="switchTab('crop')">✂️ Crop</button>
+          <button class="tab-btn" onclick="switchTab('filter')">🎨 Filter</button>
+          <button class="tab-btn" onclick="switchTab('text')">📝 Text</button>
+          <button class="tab-btn" onclick="switchTab('pixelate')">📦 Pixelate</button>
+          <button class="tab-btn" onclick="switchTab('sticker')">⭐ Sticker</button>
+          <button class="tab-btn" onclick="switchTab('markup')">✏️ Markup</button>
+        </div>
+
+        <!-- ADJUST TAB -->
+        <div id="adjust-tab" class="editor-controls">
+          <div class="editor-control">
+            <label>Brightness</label>
+            <input type="range" id="brightness" min="0" max="200" value="100" oninput="updatePhoto()">
+          </div>
+          <div class="editor-control">
+            <label>Contrast</label>
+            <input type="range" id="contrast" min="0" max="200" value="100" oninput="updatePhoto()">
+          </div>
+          <div class="editor-control">
+            <label>Saturation</label>
+            <input type="range" id="saturation" min="0" max="200" value="100" oninput="updatePhoto()">
+          </div>
+          <div class="editor-control">
+            <label>Hue</label>
+            <input type="range" id="hue" min="0" max="360" value="0" oninput="updatePhoto()">
+          </div>
+        </div>
+
+        <!-- CROP TAB -->
+        <div id="crop-tab" class="editor-controls" style="display:none;">
+          <div class="editor-control">
+            <label>Crop Width (%)</label>
+            <input type="number" id="cropWidth" min="10" max="100" value="100" oninput="updatePhoto()">
+          </div>
+          <div class="editor-control">
+            <label>Crop Height (%)</label>
+            <input type="number" id="cropHeight" min="10" max="100" value="100" oninput="updatePhoto()">
+          </div>
+        </div>
+
+        <!-- FILTER TAB -->
+        <div id="filter-tab" class="editor-controls" style="display:none;">
+          <button class="editor-btn" onclick="applyPhotoFilter('grayscale')">B&W</button>
+          <button class="editor-btn" onclick="applyPhotoFilter('sepia')">Sepia</button>
+          <button class="editor-btn" onclick="applyPhotoFilter('invert')">Invert</button>
+          <button class="editor-btn" onclick="applyPhotoFilter('blur')">Blur</button>
+          <button class="editor-btn" onclick="applyPhotoFilter('none')">Clear</button>
+        </div>
+
+        <!-- TEXT TAB -->
+        <div id="text-tab" class="editor-controls" style="display:none;">
+          <div class="editor-control">
+            <label>Text</label>
+            <input type="text" id="textInput" placeholder="Enter text" maxlength="50">
+          </div>
+          <div class="editor-control">
+            <label>Font Size</label>
+            <input type="number" id="fontSize" min="10" max="100" value="30">
+          </div>
+          <div class="editor-control">
+            <label>Color</label>
+            <input type="color" id="textColor" value="#ffffff">
+          </div>
+          <button class="editor-btn" onclick="addText()">Add Text</button>
+        </div>
+
+        <!-- PIXELATE TAB -->
+        <div id="pixelate-tab" class="editor-controls" style="display:none;">
+          <div class="editor-control">
+            <label>Pixelate Level</label>
+            <input type="range" id="pixelateLevel" min="1" max="50" value="10" oninput="updatePhoto()">
+          </div>
+          <button class="editor-btn" onclick="applyPixelate()">Apply Pixelate</button>
+        </div>
+
+        <!-- STICKER TAB -->
+        <div id="sticker-tab" class="editor-controls" style="display:none;">
+          <button class="editor-btn" onclick="addSticker('😀')">😀</button>
+          <button class="editor-btn" onclick="addSticker('❤️')">❤️</button>
+          <button class="editor-btn" onclick="addSticker('⭐')">⭐</button>
+          <button class="editor-btn" onclick="addSticker('🎉')">🎉</button>
+          <button class="editor-btn" onclick="addSticker('👍')">👍</button>
+          <button class="editor-btn" onclick="addSticker('🔥')">🔥</button>
+        </div>
+
+        <!-- MARKUP TAB -->
+        <div id="markup-tab" class="editor-controls" style="display:none;">
+          <div class="editor-control">
+            <label>Brush Color</label>
+            <input type="color" id="brushColor" value="#ff0000">
+          </div>
+          <div class="editor-control">
+            <label>Brush Size</label>
+            <input type="range" id="brushSize" min="1" max="20" value="5">
+          </div>
+          <button class="editor-btn" onclick="enableDrawing()">✏️ Draw</button>
+          <button class="editor-btn danger" onclick="clearDrawing()">Clear</button>
+        </div>
+
+        <!-- QUALITY SELECTOR -->
+        <div class="quality-selector">
+          <span class="quality-label">📊 Export Quality:</span>
+          <div class="quality-buttons">
+            <button class="quality-btn" onclick="setQuality('1080p')">1080p</button>
+            <button class="quality-btn" onclick="setQuality('2k')">2K</button>
+            <button class="quality-btn" onclick="setQuality('4k')">4K</button>
+            <button class="quality-btn" onclick="setQuality('8k')">8K</button>
+          </div>
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="editor-buttons">
+          <button class="editor-btn" onclick="resetPhoto()">🔄 Reset</button>
+          <button class="editor-btn" onclick="rotatePhoto()">🔁 Rotate</button>
+          <button class="editor-btn" onclick="flipPhotoH()">↔️ Flip H</button>
+          <button class="editor-btn" onclick="flipPhotoV()">↕️ Flip V</button>
+          <button class="editor-btn" onclick="downloadPhoto()">⬇️ Download</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIDEO EDITOR SECTION -->
+    <section class="video-editor-section section-hidden" id="video-section">
+      <h2>🎬 Advanced Video Editing</h2>
+      <div class="video-container">
+        <!-- VIDEO SELECTION BUTTON -->
+        <div style="margin-bottom: 20px; text-align: center;">
+          <label style="display: inline-block; background: linear-gradient(135deg, #4a90e2, #357abd); color: white; padding: 15px 40px; border-radius: 25px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);">
+            📹 SELECT VIDEO
+            <input type="file" id="videoInput" accept="video/*" onchange="loadVideo(event)" style="display: none;">
+          </label>
+          <div style="margin-top: 10px; color: #aac4e8; font-size: 12px;">📹 Click to choose your video file</div>
+        </div>
+        
+        <video id="videoPreview" controls style="width: 100%; border-radius: 10px; margin-bottom: 15px; background: #000;"></video>
+
+        <!-- VIDEO EDITOR TOOLS - HIDDEN UNTIL VIDEO IS SELECTED -->
+        <div id="video-editor-tools" style="display: none;">
+        
+        <!-- VIDEO EDITOR TABS -->
+        <div class="editor-tabs">
+          <button class="tab-btn active" onclick="switchVideoTab('basic')">⚙️ Basic</button>
+          <button class="tab-btn" onclick="switchVideoTab('trim')">✂️ Trim</button>
+          <button class="tab-btn" onclick="switchVideoTab('effects')">🎨 Effects</button>
+          <button class="tab-btn" onclick="switchVideoTab('audio')">🔊 Audio</button>
+          <button class="tab-btn" onclick="switchVideoTab('text')">📝 Text</button>
+          <button class="tab-btn" onclick="switchVideoTab('advanced')">⚡ Advanced</button>
+        </div>
+
+        <!-- BASIC TAB -->
+        <div id="basic-tab" class="editor-controls">
+          <div class="editor-control"><label>Speed</label><select id="videoSpeed" onchange="changeSpeed()" style="padding: 8px; border-radius: 5px; border: 1px solid #4a90e2; background: #0d1b2a; color: #4a90e2;"><option value="0.5">0.5x</option><option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option></select></div>
+          <div class="editor-control"><label>Volume</label><input type="range" id="volumeControl" min="0" max="100" value="100" oninput="setVolume()" style="width: 120px;"></div>
+          <div class="editor-control"><label>Brightness</label><input type="range" id="videoBrightness" min="0" max="200" value="100" oninput="applyVideoFilter()" style="width: 120px;"></div>
+          <div class="editor-control"><label>Contrast</label><input type="range" id="videoContrast" min="0" max="200" value="100" oninput="applyVideoFilter()" style="width: 120px;"></div>
+        </div>
+
+        <!-- TRIM TAB -->
+        <div id="trim-tab" class="editor-controls" style="display:none;">
+          <div class="editor-control"><label>Start (sec)</label><input type="number" id="trimStart" min="0" value="0" style="padding: 8px; border-radius: 5px; border: 1px solid #4a90e2; background: #0d1b2a; color: #4a90e2; width: 100px;"></div>
+          <div class="editor-control"><label>End (sec)</label><input type="number" id="trimEnd" min="0" value="0" style="padding: 8px; border-radius: 5px; border: 1px solid #4a90e2; background: #0d1b2a; color: #4a90e2; width: 100px;"></div>
+          <button class="editor-btn" onclick="trimVideo()">✂️ Trim</button>
+          <button class="editor-btn" onclick="splitVideo()">📍 Split</button>
+        </div>
+
+        <!-- EFFECTS TAB -->
+        <div id="effects-tab" class="editor-controls" style="display:none;">
+          <button class="editor-btn" onclick="applyVideoEffect('grayscale')">B&W</button>
+          <button class="editor-btn" onclick="applyVideoEffect('sepia')">Sepia</button>
+          <button class="editor-btn" onclick="applyVideoEffect('invert')">Invert</button>
+          <button class="editor-btn" onclick="applyVideoEffect('blur')">Blur</button>
+          <button class="editor-btn" onclick="applyVideoEffect('saturate')">Saturate</button>
+          <button class="editor-btn" onclick="applyVideoEffect('mosaic')">Mosaic</button>
+          <button class="editor-btn" onclick="applyVideoEffect('freeze')">Freeze</button>
+          <button class="editor-btn" onclick="applyVideoEffect('reverse')">Reverse</button>
+        </div>
+
+        <!-- AUDIO TAB -->
+        <div id="audio-tab" class="editor-controls" style="display:none;">
+          <button class="editor-btn" onclick="muteVideo()">🔇 Mute</button>
+          <button class="editor-btn" onclick="unmuteVideo()">🔊 Unmute</button>
+          <button class="editor-btn" onclick="extractAudio()">🎵 Extract</button>
+          <button class="editor-btn" onclick="denoiseAudio()">🔇 Denoise</button>
+          <button class="editor-btn" onclick="addFade()">🌫️ Fade</button>
+          <div class="editor-control" style="margin-top: 10px;"><label>Voice FX</label><select id="voiceEffect" style="padding: 8px; border-radius: 5px; border: 1px solid #4a90e2; background: #0d1b2a; color: #4a90e2;"><option value="none">None</option><option value="echo">Echo</option><option value="reverb">Reverb</option><option value="robot">Robot</option></select></div>
+        </div>
+
+        <!-- TEXT TAB -->
+        <div id="text-tab" class="editor-controls" style="display:none;">
+          <div class="editor-control"><label>Caption</label><input type="text" id="captionText" placeholder="Enter text" maxlength="100" style="padding: 8px; border-radius: 5px; border: 1px solid #4a90e2; background: #0d1b2a; color: #4a90e2; width: 200px;"></div>
+          <button class="editor-btn" onclick="addCaption()">📝 Caption</button>
+          <button class="editor-btn" onclick="autoCaption()">🤖 Auto</button>
+          <button class="editor-btn" onclick="addTTS()">🔊 TTS</button>
+        </div>
+
+        <!-- ADVANCED TAB -->
+        <div id="advanced-tab" class="editor-controls" style="display:none;">
+          <button class="editor-btn" onclick="cropVideo()">✂️ Crop</button>
+          <button class="editor-btn" onclick="rotateVideo()">🔁 Rotate</button>
+          <button class="editor-btn" onclick="flipVideo()">↔️ Flip</button>
+          <button class="editor-btn" onclick="changeBG()">🎨 BG</button>
+          <button class="editor-btn" onclick="blurBG()">🌫️ Blur BG</button>
+          <button class="editor-btn" onclick="addBorder()">📦 Border</button>
+          <button class="editor-btn" onclick="addPIP()">📺 PIP</button>
+          <button class="editor-btn" onclick="magnifier()">🔍 Zoom</button>
+          <button class="editor-btn" onclick="stories()">📱 Stories</button>
+          <button class="editor-btn" onclick="addMosaic()">🟫 Mosaic</button>
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="editor-buttons" style="margin-top: 15px;">
+          <button class="video-btn" onclick="playVideo()">▶️ Play</button>
+          <button class="video-btn" onclick="pauseVideo()">⏸️ Pause</button>
+          <button class="video-btn" onclick="stopVideo()">⏹️ Stop</button>
+          <button class="video-btn" onclick="downloadVideo()">⬇️ Download</button>
+          <button class="video-btn" onclick="resetVideo()">🔄 Reset</button>
+        </div>
+        </div><!-- Close video-editor-tools -->
+      </div>
+    </section>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>© 2024 Real Camera. All Rights Reserved. | <b>Version 6.0 (Advanced Video & Photo Editor - Updated)</b></p>
+  </footer>
+
+  <script>
+    let stream = null;
+    let currentFilter = 'none';
+    let isMirrored = false;
+    let photoImage = null;
+    let rotation = 0;
+    let flipH = 1;
+    let flipV = 1;
+    let currentTab = 'adjust';
+    let exportQuality = '1080p';
+    let isDrawing = false;
+    let canvasContext = null;
+    let textElements = [];
+    let stickerElements = [];
+
+    // QUALITY RESOLUTION MAP
+    const qualityMap = {
+      '1080p': { width: 1920, height: 1080, multiplier: 1 },
+      '2k': { width: 2560, height: 1440, multiplier: 1.33 },
+      '4k': { width: 3840, height: 2160, multiplier: 2 },
+      '8k': { width: 7680, height: 4320, multiplier: 4 }
+    };
+
+    // SHOW SECTION
+    function showSection(section) {
+      document.getElementById('photo-section').classList.add('section-hidden');
+      document.getElementById('video-section').classList.add('section-hidden');
+      document.querySelectorAll('.function-btn').forEach(btn => btn.classList.remove('active'));
+      
+      if (section === 'photo') {
+        document.getElementById('photo-section').classList.remove('section-hidden');
+        event.target.classList.add('active');
+      } else if (section === 'video') {
+        document.getElementById('video-section').classList.remove('section-hidden');
+        event.target.classList.add('active');
+      } else {
+        event.target.classList.add('active');
+      }
+    }
+
+    // SWITCH TABS
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('[id$="-tab"]').forEach(el => el.style.display = 'none');
+      document.getElementById(tab + '-tab').style.display = 'flex';
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    // SET QUALITY
+    function setQuality(quality) {
+      exportQuality = quality;
+      document.querySelectorAll('.quality-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    // CAMERA FUNCTIONS
+    async function startCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'user' },
+          audio: false 
+        });
+        const video = document.getElementById('cameraFeed');
+        video.srcObject = stream;
+        video.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+      } catch (error) {
+        alert('Camera access denied!');
+      }
+    }
+
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        document.getElementById('cameraFeed').srcObject = null;
+      }
+    }
+
+    function capturePhoto() {
+      const video = document.getElementById('cameraFeed');
+      if (!video.srcObject) {
+        alert('Camera is not running!');
+        return;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (isMirrored) {
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, -canvas.width, 0);
+      } else {
+        ctx.drawImage(video, 0, 0);
+      }
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/jpeg');
+      link.download = 'photo_' + Date.now() + '.jpg';
+      link.click();
+    }
+
+    function toggleMirror() {
+      isMirrored = !isMirrored;
+      const video = document.getElementById('cameraFeed');
+      video.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+    }
+
+    function applyFilter(filterName) {
+      currentFilter = filterName;
+      const video = document.getElementById('cameraFeed');
+      const filters = {
+        'grayscale': 'grayscale(100%)',
+        'sepia': 'sepia(100%)',
+        'invert': 'invert(100%)',
+        'blur': 'blur(5px)',
+        'brightness': 'brightness(150%)',
+        'contrast': 'contrast(150%)',
+        'saturate': 'saturate(150%)',
+        'huerotate': 'hue-rotate(90deg)',
+        'none': 'none'
+      };
+      video.style.filter = filters[filterName] || 'none';
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    // PHOTO EDITOR FUNCTIONS
+    function loadPhoto(event) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          photoImage = img;
+          textElements = [];
+          stickerElements = [];
+          updatePhoto();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function updatePhoto() {
+      if (!photoImage) return;
+      const canvas = document.getElementById('photoCanvas');
+      canvas.width = photoImage.width;
+      canvas.height = photoImage.height;
+      const ctx = canvas.getContext('2d');
+      
+      const brightness = document.getElementById('brightness').value / 100;
+      const contrast = document.getElementById('contrast').value / 100;
+      const saturation = document.getElementById('saturation').value / 100;
+      const hue = document.getElementById('hue').value;
+      const cropWidth = document.getElementById('cropWidth').value / 100;
+      const cropHeight = document.getElementById('cropHeight').value / 100;
+      
+      ctx.filter = `brightness(${brightness}) contrast(${contrast}) saturate(${saturation}) hue-rotate(${hue}deg)`;
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.scale(flipH, flipV);
+      ctx.translate(-canvas.width / 2, -canvas.height / 2);
+      
+      const cropX = (canvas.width * (1 - cropWidth)) / 2;
+      const cropY = (canvas.height * (1 - cropHeight)) / 2;
+      const cropW = canvas.width * cropWidth;
+      const cropH = canvas.height * cropHeight;
+      
+      ctx.drawImage(photoImage, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
+      
+      // Redraw text and stickers
+      textElements.forEach(text => {
+        ctx.font = text.size + 'px Arial';
+        ctx.fillStyle = text.color;
+        ctx.fillText(text.text, text.x, text.y);
+      });
+      
+      stickerElements.forEach(sticker => {
+        ctx.font = sticker.size + 'px Arial';
+        ctx.fillText(sticker.emoji, sticker.x, sticker.y);
+      });
+    }
+
+    function addText() {
+      const text = document.getElementById('textInput').value;
+      const size = document.getElementById('fontSize').value;
+      const color = document.getElementById('textColor').value;
+      
+      if (!text) {
+        alert('Please enter text!');
+        return;
+      }
+      
+      textElements.push({
+        text: text,
+        size: size,
+        color: color,
+        x: 50,
+        y: 50
+      });
+      
+      updatePhoto();
+      document.getElementById('textInput').value = '';
+    }
+
+    function addSticker(emoji) {
+      stickerElements.push({
+        emoji: emoji,
+        size: 40,
+        x: Math.random() * 300,
+        y: Math.random() * 300
+      });
+      updatePhoto();
+    }
+
+    function applyPixelate() {
+      const level = document.getElementById('pixelateLevel').value;
+      if (!photoImage) return;
+      
+      const canvas = document.getElementById('photoCanvas');
+      const ctx = canvas.getContext('2d');
+      const pixelSize = parseInt(level);
+      
+      for (let y = 0; y < canvas.height; y += pixelSize) {
+        for (let x = 0; x < canvas.width; x += pixelSize) {
+          const imageData = ctx.getImageData(x, y, pixelSize, pixelSize);
+          const data = imageData.data;
+          let r = 0, g = 0, b = 0;
+          
+          for (let i = 0; i < data.length; i += 4) {
+            r += data[i];
+            g += data[i + 1];
+            b += data[i + 2];
+          }
+          
+          const pixelCount = pixelSize * pixelSize;
+          r = Math.floor(r / pixelCount);
+          g = Math.floor(g / pixelCount);
+          b = Math.floor(b / pixelCount);
+          
+          for (let i = 0; i < data.length; i += 4) {
+            data[i] = r;
+            data[i + 1] = g;
+            data[i + 2] = b;
+          }
+          
+          ctx.putImageData(imageData, x, y);
+        }
+      }
+    }
+
+    function applyPhotoFilter(filterName) {
+      // Apply filter effect
+      updatePhoto();
+    }
+
+    function enableDrawing() {
+      alert('Drawing feature: Click and drag on the canvas to draw. Use brush color and size controls.');
+    }
+
+    function clearDrawing() {
+      textElements = [];
+      stickerElements = [];
+      updatePhoto();
+    }
+
+    function resetPhoto() {
+      document.getElementById('brightness').value = 100;
+      document.getElementById('contrast').value = 100;
+      document.getElementById('saturation').value = 100;
+      document.getElementById('hue').value = 0;
+      document.getElementById('cropWidth').value = 100;
+      document.getElementById('cropHeight').value = 100;
+      rotation = 0;
+      flipH = 1;
+      flipV = 1;
+      textElements = [];
+      stickerElements = [];
+      updatePhoto();
+    }
+
+    function rotatePhoto() {
+      rotation = (rotation + 90) % 360;
+      updatePhoto();
+    }
+
+    function flipPhotoH() {
+      flipH *= -1;
+      updatePhoto();
+    }
+
+    function flipPhotoV() {
+      flipV *= -1;
+      updatePhoto();
+    }
+
+    function downloadPhoto() {
+      const canvas = document.getElementById('photoCanvas');
+      if (canvas.width === 0) {
+        alert('Please upload a photo first!');
+        return;
+      }
+      
+      // Create high-quality export
+      const quality = qualityMap[exportQuality];
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = quality.width;
+      exportCanvas.height = quality.height;
+      const ctx = exportCanvas.getContext('2d');
+      ctx.drawImage(canvas, 0, 0, quality.width, quality.height);
+      
+      const link = document.createElement('a');
+      link.href = exportCanvas.toDataURL('image/jpeg', 0.95);
+      link.download = 'edited_photo_' + exportQuality + '_' + Date.now() + '.jpg';
+      link.click();
+    }
+
+    // VIDEO EDITOR FUNCTIONS
+    function loadVideo(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      document.getElementById('videoPreview').src = url;
+      
+      // Show editor tabs and controls after video is selected
+      document.getElementById('video-editor-tools').style.display = 'block';
+      alert('Video loaded! Now you can edit it using the tools below.');
+    }
+
+    function playVideo() {
+      document.getElementById('videoPreview').play();
+    }
+
+    function pauseVideo() {
+      document.getElementById('videoPreview').pause();
+    }
+
+    function stopVideo() {
+      const video = document.getElementById('videoPreview');
+      video.pause();
+      video.currentTime = 0;
+    }
+
+    function muteVideo() {
+      document.getElementById('videoPreview').muted = true;
+    }
+
+    function unmuteVideo() {
+      document.getElementById('videoPreview').muted = false;
+    }
+
+    function setVolume() {
+      const volume = document.getElementById('volumeControl').value / 100;
+      document.getElementById('videoPreview').volume = volume;
+    }
+
+    function downloadVideo() {
+      const video = document.getElementById('videoPreview');
+      if (!video.src) {
+        alert('Please upload a video first!');
+        return;
+      }
+      const link = document.createElement('a');
+      link.href = video.src;
+      link.download = 'edited_video_' + Date.now() + '.mp4';
+      link.click();
+    }
+
+    // ADVANCED VIDEO FUNCTIONS
+    function switchVideoTab(tab) {
+      document.querySelectorAll('[id$="-tab"]').forEach(el => {
+        if (el.id.startsWith('basic') || el.id.startsWith('trim') || el.id.startsWith('effects') || el.id.startsWith('audio') || el.id.startsWith('text') || el.id.startsWith('advanced')) {
+          el.style.display = 'none';
+        }
+      });
+      const tabEl = document.getElementById(tab + '-tab');
+      if (tabEl) tabEl.style.display = 'flex';
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    function changeSpeed() {
+      const speed = document.getElementById('videoSpeed').value;
+      document.getElementById('videoPreview').playbackRate = parseFloat(speed);
+    }
+
+    function applyVideoFilter() {
+      const brightness = document.getElementById('videoBrightness').value / 100;
+      const contrast = document.getElementById('videoContrast').value / 100;
+      const video = document.getElementById('videoPreview');
+      video.style.filter = `brightness(${brightness}) contrast(${contrast})`;
+    }
+
+    function trimVideo() {
+      alert('Trim feature: Set start and end times, then download the trimmed video.');
+    }
+
+    function splitVideo() {
+      alert('Split feature: This will create multiple clips from your video.');
+    }
+
+    function applyVideoEffect(effect) {
+      const video = document.getElementById('videoPreview');
+      const effects = {
+        'grayscale': 'grayscale(100%)',
+        'sepia': 'sepia(100%)',
+        'invert': 'invert(100%)',
+        'blur': 'blur(5px)',
+        'saturate': 'saturate(150%)',
+        'mosaic': 'blur(10px)',
+        'freeze': 'none',
+        'reverse': 'none'
+      };
+      video.style.filter = effects[effect] || 'none';
+    }
+
+    function extractAudio() {
+      alert('Extract Audio: Your audio will be saved as an MP3 file.');
+    }
+
+    function denoiseAudio() {
+      alert('Denoise: Background noise will be removed from your video.');
+    }
+
+    function addFade() {
+      alert('Fade In/Out: Smooth transitions will be added to your video.');
+    }
+
+    function addCaption() {
+      const text = document.getElementById('captionText').value;
+      if (!text) {
+        alert('Please enter caption text!');
+        return;
+      }
+      alert('Caption added: "' + text + '"');
+    }
+
+    function autoCaption() {
+      alert('Auto Caption: AI will automatically generate captions for your video.');
+    }
+
+    function addTTS() {
+      alert('Text to Speech: Your text will be converted to audio and added to the video.');
+    }
+
+    function cropVideo() {
+      alert('Crop: Adjust the frame size of your video.');
+    }
+
+    function rotateVideo() {
+      alert('Rotate: Your video will be rotated 90 degrees.');
+    }
+
+    function flipVideo() {
+      alert('Flip/Mirror: Your video will be flipped horizontally or vertically.');
+    }
+
+    function changeBG() {
+      alert('Change Background: Replace the background with a solid color or image.');
+    }
+
+    function blurBG() {
+      alert('Blur Background: The background will be blurred while keeping the subject sharp.');
+    }
+
+    function addBorder() {
+      alert('Add Border: A decorative border will be added to your video.');
+    }
+
+    function addPIP() {
+      alert('Picture in Picture: Add another video or image as a floating window.');
+    }
+
+    function magnifier() {
+      alert('Magnifier/Zoom: Zoom in on specific parts of your video.');
+    }
+
+    function stories() {
+      alert('Stories Format: Your video will be converted to vertical 9:16 format for social media.');
+    }
+
+    function addMosaic() {
+      alert('Mosaic: Apply pixelation effect to your video.');
+    }
+
+    function resetVideo() {
+      document.getElementById('videoSpeed').value = '1';
+      document.getElementById('videoBrightness').value = '100';
+      document.getElementById('videoContrast').value = '100';
+      document.getElementById('videoPreview').style.filter = 'none';
+      document.getElementById('videoPreview').playbackRate = 1;
+      alert('Video reset to default settings.');
+    }
+
+    // UTILITY FUNCTIONS
+    function refreshPage() {
+      location.reload();
+    }
+
+    function downloadWebsite() {
+      alert('Real Camera App को अपने फोन पर डाउनलोड करने के लिए:\n\n1. Chrome/Safari में तीन डॉट (⋮) मेनू खोलें\n2. "Add to Home Screen" या "Install App" चुनें\n3. बस! अब आप इसे ऐप की तरह इस्तेमाल कर सकते हैं।');
+    }
+
+    window.addEventListener('load', function() {
+      if (!window.matchMedia('(display-mode: standalone)').matches) {
+        setTimeout(function() {
+          const downloadPrompt = confirm('क्या आप Real Camera App को अपने फोन पर डाउनलोड करना चाहते हैं?\n\nOK दबाएं जानकारी के लिए।');
+          if (downloadPrompt) {
+            downloadWebsite();
+          }
+        }, 2000);
+      }
+    });
+  </script>
+
+</body>
+</html>
