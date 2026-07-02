@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real Camera</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #0a0a0a; color: white; overflow-x: hidden; }
+
+    /* LOADING SCREEN */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #0d1b2a, #1b2a4a);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: fadeOut 0.5s ease-in-out 3s forwards;
+    }
+    @keyframes fadeOut {
+      to { opacity: 0; visibility: hidden; }
+    }
+    .loader {
+      width: 80px;
+      height: 80px;
+      border: 4px solid #4a90e2;
+      border-top: 4px solid #fff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .loading-text {
+      margin-top: 30px;
+      font-size: 18px;
+      color: #4a90e2;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+
+    /* HEADER */
+    .header {
+      background: linear-gradient(135deg, #0d1b2a, #1b2a4a, #0d1b2a);
+      padding: 15px;
+      text-align: center;
+      border-bottom: 3px solid #4a90e2;
+      box-shadow: 0 4px 20px rgba(74, 144, 226, 0.3);
+    }
+    .header .logo-icon { font-size: 40px; margin-bottom: 5px; }
+    .header .logo-name {
+      font-size: 26px;
+      font-weight: bold;
+      color: #4a90e2;
+      letter-spacing: 2px;
+    }
+    .header .tagline {
+      font-size: 12px;
+      color: #aac4e8;
+      margin-top: 3px;
+      letter-spacing: 1px;
+    }
+
+    /* MAIN CONTAINER */
+    .main-container {
+      max-width: 100%;
+      padding: 0;
+      background: #0a0a0a;
+    }
+
+    /* CAMERA SECTION - TOP */
+    .camera-section {
+      background: linear-gradient(135deg, #0d1b2a, #1b2a4a);
+      padding: 20px;
+      text-align: center;
+    }
+    .camera-section h2 { 
+      font-size: 22px; 
+      color: #4a90e2; 
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    .camera-container {
+      width: 100%;
+      background: #0d1b2a;
+      border-radius: 15px;
+      border: 2px solid #4a90e2;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(74, 144, 226, 0.3);
+      margin-bottom: 15px;
+    }
+    #cameraFeed {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #000;
+      aspect-ratio: 16/9;
+    }
+    .camera-controls {
+      padding: 15px;
+      background: #0d1b2a;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .camera-btn {
+      background: #4a90e2;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      transition: 0.3s;
+      white-space: nowrap;
+    }
+    .camera-btn:hover { background: #357abd; transform: scale(1.05); }
+    .camera-btn.active { background: #2ecc71; }
+
+    /* FILTER SECTION */
+    .filter-section {
+      padding: 15px;
+      background: #111;
+      border-top: 1px solid #4a90e2;
+    }
+    .filter-label {
+      color: #4a90e2;
+      font-weight: bold;
+      margin-bottom: 10px;
+      display: block;
+      font-size: 14px;
+    }
+    .filter-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .filter-btn {
+      background: #0d1b2a;
+      color: #4a90e2;
+      padding: 8px 12px;
+      border-radius: 15px;
+      border: 1px solid #4a90e2;
+      cursor: pointer;
+      font-size: 12px;
+      transition: 0.3s;
+      white-space: nowrap;
+    }
+    .filter-btn:hover { background: #4a90e2; color: white; }
+    .filter-btn.active { background: #4a90e2; color: white; }
+
+    /* FUNCTIONS MENU */
+    .functions-menu {
+      padding: 15px;
+      background: #0a0a0a;
+      border-top: 2px solid #4a90e2;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+    .function-btn {
+      background: #4a90e2;
+      color: white;
+      padding: 12px 25px;
+      border-radius: 25px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: 0.3s;
+      white-space: nowrap;
+    }
+    .function-btn:hover { background: #357abd; transform: scale(1.05); }
+    .function-btn.active { background: #2ecc71; }
+
+    /* HIDDEN SECTIONS */
+    .section-hidden {
+      display: none;
+    }
+    .section-visible {
+      display: block;
+    }
+
+    /* PHOTO EDITOR SECTION */
+    .photo-editor-section {
+      background: linear-gradient(135deg, #0d1b2a, #1b2a4a);
+      padding: 20px;
+      text-align: center;
+    }
+    .photo-editor-section h2 { font-size: 22px; color: #4a90e2; margin-bottom: 15px; }
+    .editor-container {
+      width: 100%;
+      background: #0d1b2a;
+      border-radius: 15px;
+      padding: 15px;
+      border: 2px solid #4a90e2;
+    }
+    #photoCanvas {
+      width: 100%;
+      max-height: 500px;
+      background: #000;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+    .editor-controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .editor-control {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    .editor-control label {
+      color: #4a90e2;
+      font-size: 11px;
+      font-weight: bold;
+    }
+    .editor-control input[type="range"] {
+      width: 120px;
+      cursor: pointer;
+    }
+    .editor-control input[type="color"] {
+      width: 40px;
+      height: 35px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .editor-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .editor-btn {
+      background: #4a90e2;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      transition: 0.3s;
+      white-space: nowrap;
+    }
+    .editor-btn:hover { background: #357abd; }
+
+    /* VIDEO EDITOR SECTION */
+    .video-editor-section {
+      background: #0a0a0a;
+      padding: 20px;
+      text-align: center;
+    }
+    .video-editor-section h2 { font-size: 22px; color: #4a90e2; margin-bottom: 15px; }
+    .video-container {
+      width: 100%;
+      background: #0d1b2a;
+      border-radius: 15px;
+      padding: 15px;
+      border: 2px solid #4a90e2;
+    }
+    #videoPreview {
+      width: 100%;
+      height: auto;
+      background: #000;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+    .video-controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+    .video-btn {
+      background: #4a90e2;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      transition: 0.3s;
+      white-space: nowrap;
+    }
+    .video-btn:hover { background: #357abd; }
+
+    /* FILE INPUT STYLING */
+    input[type="file"] {
+      color: #4a90e2;
+      font-size: 12px;
+      margin-bottom: 15px;
+    }
+
+    /* FOOTER */
+    footer {
+      background: #0d1b2a;
+      text-align: center;
+      padding: 15px;
+      color: #666;
+      font-size: 12px;
+      border-top: 2px solid #4a90e2;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .header .logo-name { font-size: 22px; }
+      .header .logo-icon { font-size: 35px; }
+      .camera-btn, .filter-btn, .function-btn { font-size: 12px; padding: 8px 12px; }
+      .editor-control input[type="range"] { width: 100px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOADING SCREEN -->
+  <div class="loading-screen">
+    <div class="loader"></div>
+    <div class="loading-text">LOADING...</div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo-icon">📷</div>
+    <div class="logo-name">REAL CAMERA</div>
+    <div class="tagline">Professional Photo & Video Editing | Camera Filters</div>
+  </div>
+
+  <!-- MAIN CONTAINER -->
+  <div class="main-container">
+
+    <!-- CAMERA SECTION - TOP PRIORITY -->
+    <section class="camera-section">
+      <h2>📹 Live Camera</h2>
+      <div class="camera-container">
+        <video id="cameraFeed" autoplay playsinline></video>
+        <div class="camera-controls">
+          <button class="camera-btn" onclick="startCamera()">📹 Start</button>
+          <button class="camera-btn" onclick="stopCamera()">⏹️ Stop</button>
+          <button class="camera-btn" onclick="capturePhoto()">📸 Capture</button>
+          <button class="camera-btn" onclick="toggleMirror()">🔄 Mirror</button>
+        </div>
+      </div>
+
+      <!-- FILTERS SECTION -->
+      <div class="filter-section">
+        <span class="filter-label">🎨 Filters:</span>
+        <div class="filter-buttons">
+          <button class="filter-btn active" onclick="applyFilter('none')">Normal</button>
+          <button class="filter-btn" onclick="applyFilter('grayscale')">B&W</button>
+          <button class="filter-btn" onclick="applyFilter('sepia')">Sepia</button>
+          <button class="filter-btn" onclick="applyFilter('invert')">Invert</button>
+          <button class="filter-btn" onclick="applyFilter('blur')">Blur</button>
+          <button class="filter-btn" onclick="applyFilter('brightness')">Bright</button>
+          <button class="filter-btn" onclick="applyFilter('contrast')">Contrast</button>
+          <button class="filter-btn" onclick="applyFilter('saturate')">Saturate</button>
+          <button class="filter-btn" onclick="applyFilter('huerotate')">Hue</button>
+          <button class="filter-btn" onclick="applyFilter('opacity')">Opacity</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FUNCTIONS MENU -->
+    <div class="functions-menu">
+      <button class="function-btn active" onclick="showSection('camera')">📹 Camera</button>
+      <button class="function-btn" onclick="showSection('photo')">📸 Photo Edit</button>
+      <button class="function-btn" onclick="showSection('video')">🎬 Video Edit</button>
+      <button class="function-btn" onclick="refreshPage()">🔄 Refresh</button>
+      <button class="function-btn" onclick="downloadWebsite()">⬇️ Download App</button>
+    </div>
+
+    <!-- PHOTO EDITOR SECTION -->
+    <section class="photo-editor-section section-hidden" id="photo-section">
+      <h2>📸 Photo Editing</h2>
+      <div class="editor-container">
+        <canvas id="photoCanvas"></canvas>
+        <div>
+          <input type="file" id="photoInput" accept="image/*" onchange="loadPhoto(event)">
+        </div>
+        <div class="editor-controls">
+          <div class="editor-control">
+            <label>Brightness</label>
+            <input type="range" id="brightness" min="0" max="200" value="100" oninput="updatePhoto()">
+          </div>
+          <div class="editor-control">
+            <label>Contrast</label>
+            <input type="range" id="contrast" min="0" max="200" value="100" oninput="updatePhoto()">
+          </div>
+          <div class="editor-control">
+            <label>Saturation</label>
+            <input type="range" id="saturation" min="0" max="200" value="100" oninput="updatePhoto()">
+          </div>
+          <div class="editor-control">
+            <label>Hue</label>
+            <input type="range" id="hue" min="0" max="360" value="0" oninput="updatePhoto()">
+          </div>
+        </div>
+        <div class="editor-buttons">
+          <button class="editor-btn" onclick="resetPhoto()">🔄 Reset</button>
+          <button class="editor-btn" onclick="rotatePhoto()">🔁 Rotate</button>
+          <button class="editor-btn" onclick="flipPhotoH()">↔️ Flip H</button>
+          <button class="editor-btn" onclick="flipPhotoV()">↕️ Flip V</button>
+          <button class="editor-btn" onclick="downloadPhoto()">⬇️ Download</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIDEO EDITOR SECTION -->
+    <section class="video-editor-section section-hidden" id="video-section">
+      <h2>🎬 Video Editing</h2>
+      <div class="video-container">
+        <video id="videoPreview" controls></video>
+        <div>
+          <input type="file" id="videoInput" accept="video/*" onchange="loadVideo(event)">
+        </div>
+        <div class="video-controls">
+          <button class="video-btn" onclick="playVideo()">▶️ Play</button>
+          <button class="video-btn" onclick="pauseVideo()">⏸️ Pause</button>
+          <button class="video-btn" onclick="stopVideo()">⏹️ Stop</button>
+          <button class="video-btn" onclick="muteVideo()">🔇 Mute</button>
+          <button class="video-btn" onclick="unmuteVideo()">🔊 Unmute</button>
+          <button class="video-btn" onclick="downloadVideo()">⬇️ Download</button>
+        </div>
+        <div style="margin-top: 15px;">
+          <label style="color: #4a90e2; font-weight: bold; font-size: 13px;">Volume:</label>
+          <input type="range" id="volumeControl" min="0" max="100" value="100" oninput="setVolume()" style="width: 100%; max-width: 300px; margin-top: 10px;">
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>© 2024 Real Camera. All Rights Reserved.</p>
+  </footer>
+
+  <script>
+    let stream = null;
+    let currentFilter = 'none';
+    let isMirrored = false;
+    let photoImage = null;
+    let rotation = 0;
+    let flipH = 1;
+    let flipV = 1;
+
+    // Show/Hide Sections
+    function showSection(section) {
+      // Hide all sections
+      document.getElementById('photo-section').classList.add('section-hidden');
+      document.getElementById('video-section').classList.add('section-hidden');
+      
+      // Remove active class from all buttons
+      document.querySelectorAll('.function-btn').forEach(btn => btn.classList.remove('active'));
+      
+      // Show selected section
+      if (section === 'photo') {
+        document.getElementById('photo-section').classList.remove('section-hidden');
+        event.target.classList.add('active');
+      } else if (section === 'video') {
+        document.getElementById('video-section').classList.remove('section-hidden');
+        event.target.classList.add('active');
+      } else {
+        event.target.classList.add('active');
+      }
+    }
+
+    // CAMERA FUNCTIONS
+    async function startCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'user' },
+          audio: false 
+        });
+        const video = document.getElementById('cameraFeed');
+        video.srcObject = stream;
+        video.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+      } catch (error) {
+        alert('Camera access denied! Please allow camera permission.');
+      }
+    }
+
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        document.getElementById('cameraFeed').srcObject = null;
+      }
+    }
+
+    function capturePhoto() {
+      const video = document.getElementById('cameraFeed');
+      if (!video.srcObject) {
+        alert('Camera is not running!');
+        return;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (isMirrored) {
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, -canvas.width, 0);
+      } else {
+        ctx.drawImage(video, 0, 0);
+      }
+      applyFilterToCanvas(canvas);
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/jpeg');
+      link.download = 'photo_' + Date.now() + '.jpg';
+      link.click();
+    }
+
+    function toggleMirror() {
+      isMirrored = !isMirrored;
+      const video = document.getElementById('cameraFeed');
+      video.style.transform = isMirrored ? 'scaleX(-1)' : 'scaleX(1)';
+    }
+
+    function applyFilter(filterName) {
+      currentFilter = filterName;
+      const video = document.getElementById('cameraFeed');
+      switch(filterName) {
+        case 'grayscale':
+          video.style.filter = 'grayscale(100%)';
+          break;
+        case 'sepia':
+          video.style.filter = 'sepia(100%)';
+          break;
+        case 'invert':
+          video.style.filter = 'invert(100%)';
+          break;
+        case 'blur':
+          video.style.filter = 'blur(5px)';
+          break;
+        case 'brightness':
+          video.style.filter = 'brightness(150%)';
+          break;
+        case 'contrast':
+          video.style.filter = 'contrast(150%)';
+          break;
+        case 'saturate':
+          video.style.filter = 'saturate(150%)';
+          break;
+        case 'huerotate':
+          video.style.filter = 'hue-rotate(90deg)';
+          break;
+        case 'opacity':
+          video.style.filter = 'opacity(0.8)';
+          break;
+        default:
+          video.style.filter = 'none';
+      }
+      // Update active button
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    function applyFilterToCanvas(canvas) {
+      const ctx = canvas.getContext('2d');
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      
+      switch(currentFilter) {
+        case 'grayscale':
+          for (let i = 0; i < data.length; i += 4) {
+            const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+            data[i] = data[i + 1] = data[i + 2] = gray;
+          }
+          break;
+        case 'sepia':
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i], g = data[i + 1], b = data[i + 2];
+            data[i] = Math.min(255, r * 0.393 + g * 0.769 + b * 0.189);
+            data[i + 1] = Math.min(255, r * 0.349 + g * 0.686 + b * 0.168);
+            data[i + 2] = Math.min(255, r * 0.272 + g * 0.534 + b * 0.131);
+          }
+          break;
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    // PHOTO EDITOR FUNCTIONS
+    function loadPhoto(event) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          photoImage = img;
+          updatePhoto();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function updatePhoto() {
+      if (!photoImage) return;
+      const canvas = document.getElementById('photoCanvas');
+      canvas.width = photoImage.width;
+      canvas.height = photoImage.height;
+      const ctx = canvas.getContext('2d');
+      
+      const brightness = document.getElementById('brightness').value / 100;
+      const contrast = document.getElementById('contrast').value / 100;
+      const saturation = document.getElementById('saturation').value / 100;
+      const hue = document.getElementById('hue').value;
+      
+      ctx.filter = `brightness(${brightness}) contrast(${contrast}) saturate(${saturation}) hue-rotate(${hue}deg)`;
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.scale(flipH, flipV);
+      ctx.translate(-canvas.width / 2, -canvas.height / 2);
+      ctx.drawImage(photoImage, 0, 0);
+    }
+
+    function resetPhoto() {
+      document.getElementById('brightness').value = 100;
+      document.getElementById('contrast').value = 100;
+      document.getElementById('saturation').value = 100;
+      document.getElementById('hue').value = 0;
+      rotation = 0;
+      flipH = 1;
+      flipV = 1;
+      updatePhoto();
+    }
+
+    function rotatePhoto() {
+      rotation = (rotation + 90) % 360;
+      updatePhoto();
+    }
+
+    function flipPhotoH() {
+      flipH *= -1;
+      updatePhoto();
+    }
+
+    function flipPhotoV() {
+      flipV *= -1;
+      updatePhoto();
+    }
+
+    function downloadPhoto() {
+      const canvas = document.getElementById('photoCanvas');
+      if (canvas.width === 0) {
+        alert('Please upload a photo first!');
+        return;
+      }
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/jpeg');
+      link.download = 'edited_photo_' + Date.now() + '.jpg';
+      link.click();
+    }
+
+    // VIDEO EDITOR FUNCTIONS
+    function loadVideo(event) {
+      const file = event.target.files[0];
+      const url = URL.createObjectURL(file);
+      document.getElementById('videoPreview').src = url;
+    }
+
+    function playVideo() {
+      document.getElementById('videoPreview').play();
+    }
+
+    function pauseVideo() {
+      document.getElementById('videoPreview').pause();
+    }
+
+    function stopVideo() {
+      const video = document.getElementById('videoPreview');
+      video.pause();
+      video.currentTime = 0;
+    }
+
+    function muteVideo() {
+      document.getElementById('videoPreview').muted = true;
+    }
+
+    function unmuteVideo() {
+      document.getElementById('videoPreview').muted = false;
+    }
+
+    function setVolume() {
+      const volume = document.getElementById('volumeControl').value / 100;
+      document.getElementById('videoPreview').volume = volume;
+    }
+
+    function downloadVideo() {
+      const video = document.getElementById('videoPreview');
+      if (!video.src) {
+        alert('Please upload a video first!');
+        return;
+      }
+      const link = document.createElement('a');
+      link.href = video.src;
+      link.download = 'edited_video_' + Date.now() + '.mp4';
+      link.click();
+    }
+
+    // REFRESH PAGE FUNCTION
+    function refreshPage() {
+      location.reload();
+    }
+
+    // DOWNLOAD WEBSITE FUNCTION
+    function downloadWebsite() {
+      alert('Real Camera App को अपने फोन पर डाउनलोड करने के लिए:\n\n1. Chrome/Safari में तीन डॉट (⋮) मेनू खोलें\n2. "Add to Home Screen" या "Install App" चुनें\n3. बस! अब आप इसे ऐप की तरह इस्तेमाल कर सकते हैं।');
+    }
+
+    // SHOW DOWNLOAD PROMPT ON PAGE LOAD
+    window.addEventListener('load', function() {
+      // Check if it's not installed as PWA
+      if (!window.matchMedia('(display-mode: standalone)').matches) {
+        setTimeout(function() {
+          const downloadPrompt = confirm('क्या आप Real Camera App को अपने फोन पर डाउनलोड करना चाहते हैं?\n\nOK दबाएं जानकारी के लिए।');
+          if (downloadPrompt) {
+            downloadWebsite();
+          }
+        }, 2000);
+      }
+    });
+  </script>
+
+</body>
+</html>
